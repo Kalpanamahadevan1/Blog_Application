@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>All Posts</title>
+    <style>
+
+        body {
+            background-color: #fff;
+            color: #000;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            font-size: 2rem;
+            color: #000;
+        }
+
+        .create-post {
+            margin-bottom: 30px;
+        }
+
+        .create-post button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .create-post button:hover {
+            background-color: #333;
+        }
+
+        .filter-container {
+            position: fixed;
+            right: 40px;
+            top: 80px;
+            width: 300px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            max-height: 85vh;
+            overflow-y: auto;
+            z-index: 100;
+            color: #000000;
+        }
+
+        .filter-container h3 {
+            font-size: 1.3em;
+            margin-bottom: 16px;
+            text-align: center;
+            color: #000;
+            font-weight: 600;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+        }
+
+        .filter-group {
+            margin-bottom: 18px;
+        }
+
+        .filter-group > label {
+            display: block;
+            font-weight: 600;
+            color: #111;
+            margin-bottom: 6px;
+        }
+
+        .filters input[type="text"],
+        .filters select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #999;
+            font-size: 14px;
+            color: #000;
+            background-color: #fff;
+            transition: border 0.2s ease-in-out, background-color 0.2s;
+        }
+
+        .filters input[type="text"]:focus,
+        .filters select:focus {
+            border-color: #000;
+            outline: none;
+            background-color: #f8f8f8;
+        }
+
+        .checkbox-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            background-color: #fafafa;
+        }
+
+        .checkbox-list label {
+            font-weight: 400;
+            color: #000;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .checkbox-list input[type="checkbox"] {
+            accent-color: #000; /* Modern browsers support this */
+        }
+
+        .apply-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: 0.3s ease;
+        }
+
+        .apply-btn:hover {
+            background-color: #333;
+        }
+
+        .checkbox-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .checkbox-list::-webkit-scrollbar-thumb {
+            background-color: #666;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 900px) {
+            .filter-container {
+                position: static;
+                width: 100%;
+                margin-bottom: 20px;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+
+        .post {
+            text-align: left;
+            border: 1px solid #000;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #fff;
+        }
+
+        .post h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #000;
+        }
+
+        .post p {
+            margin: 5px 0;
+            color: #000;
+        }
+
+        .post a {
+            color: #000;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .post a:hover {
+            text-decoration: underline;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .pagination a {
+            padding: 8px 12px;
+            border: 1px solid #000;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .pagination a:hover {
+            background-color: #000;
+            color: #fff;
+        }
+
+        @media (max-width: 600px) {
+            .filters {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .filters input,
+            .filters select,
+            .filters button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>All Posts</h2>
+
+    <div class="create-post">
+        <a href="/post/create"><button type="button">Create New Post</button></a>
+    </div>
+
+    <aside class="filter-container">
+        <h3>Filter Posts</h3>
+
+        <form class="filters" th:action="@{/}" method="get">
+            <!-- Title Search -->
+            <div class="filter-group">
+                <label for="titleSearch">Search by Title</label>
+                <input type="text" id="titleSearch" name="titleSearch" placeholder="Enter title" th:value="${titleSearch}">
+            </div>
+
+            <!-- Authors -->
+            <div class="filter-group">
+                <label>Authors</label>
+                <div class="checkbox-list">
+                    <div th:each="author : ${allAuthors}">
+                        <label>
+                            <input type="checkbox" name="authors" th:value="${author}"
+                                   th:checked="${selectedAuthors != null and selectedAuthors.contains(author)}">
+                            <span th:text="${author}"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="filter-group">
+                <label>Tags</label>
+                <div class="checkbox-list">
+                    <div th:each="tag : ${allTags}">
+                        <label>
+                            <input type="checkbox" name="tags" th:value="${tag}"
+                                   th:checked="${selectedTags != null and selectedTags.contains(tag)}">
+                            <span th:text="${tag}"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sorting -->
+            <div class="filter-group">
+                <label>Sort by</label>
+                <select name="sortField">
+                    <option value="title" th:selected="${sortField == 'title'}">Title</option>
+                    <option value="publishedAt" th:selected="${sortField == 'publishedAt'}">Published Date</option>
+                </select>
+
+                <select name="sortOrder">
+                    <option value="asc" th:selected="${sortOrder == 'asc'}">Ascending</option>
+                    <option value="desc" th:selected="${sortOrder == 'desc'}">Descending</option>
+                </select>
+            </div>
+
+            <button type="submit" class="apply-btn">Apply Filters</button>
+        </form>
+    </aside>
+
+    <div th:each="post : ${posts}" class="post">
+        <h3>
+            <a th:href="@{/(sort=${sort == 'titleAsc' ? 'titleDesc' : 'titleAsc'}, author=${author}, tag=${tag})}"
+               th:text="${post.title}"></a>
+        </h3>
+        <p>
+            By <span th:text="${post.authorName}"></span> |
+            <a th:href="@{/(sort=${sort == 'dateAsc' ? 'dateDesc' : 'dateAsc'}, author=${author}, tag=${tag})}"
+               th:text="${#temporals.format(post.publishedAt, 'dd-MM-yyyy HH:mm')}"></a>
+        </p>
+        <p th:text="${post.excerpt}"></p>
+        <p>tags: <span th:text="${post.tagsDisplay}"></span></p>
+        <p>
+            <a th:href="@{'/post/' + ${post.id}}">View</a> |
+            <a th:href="@{'/post/edit/' + ${post.id}}">Edit</a> |
+            <a th:href="@{'/post/delete/' + ${post.id}}" onclick="return confirm('Delete this post?');">Delete</a>
+        </p>
+    </div>
+
+    <div class="pagination">
+            <span th:if="${currentPage > 0}">
+                <a th:href="@{/(page=${currentPage - 1}, author=${author}, tag=${tag}, sort=${sort})}">Previous</a>
+            </span>
+        <span>Page <span th:text="${currentPage + 1}"></span> of <span th:text="${totalPages}"></span></span>
+        <span th:if="${currentPage + 1 < totalPages}">
+                <a th:href="@{/(page=${currentPage + 1}, author=${author}, tag=${tag}, sort=${sort})}">Next</a>
+            </span>
+    </div>
+</div>
+</body>
+</html>
