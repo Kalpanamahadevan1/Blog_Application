@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class PostService {
@@ -41,15 +42,14 @@ public class PostService {
     public Page<Post> getPosts(String author, String tag, int page, String sort) {
         Sort sorting = sort.equals("title") ? Sort.by("title").ascending() : Sort.by("publishedAt").descending();
         Pageable pageable = PageRequest.of(page, 10, sorting); // 10 per page
-        return postRepository.findByAuthorNameAndTags(
+        return postRepository.findByAuthorNameContainingIgnoreCaseAndTagsContainingIgnoreCase(
                 author == null ? "" : author,
                 tag == null ? "" : tag,
                 pageable
         );
     }
 
-    // sort asc and desc
-    public Page<Post> findPosts(String author, String tag, String sortField, int page, int size) {
+    public Page<Post> findPosts(Set<String> author, Set<String> tag, String sortField, int page, int size) {
         Sort sort;
 
         if ("titleAsc".equalsIgnoreCase(sortField)) {
@@ -65,16 +65,23 @@ public class PostService {
         }
 
         Pageable pageable = PageRequest.of(page, size, sort);
+        boolean authorsEmpty = (author == null || author.isEmpty());
+        boolean tagsEmpty = (tag == null || tag.isEmpty());
 
-        if ((author == null || author.isEmpty()) && (tag == null || tag.isEmpty())) {
+        if (authorsEmpty && tagsEmpty) {
             return postRepository.findAll(pageable);
-        } else if (author != null && !author.isEmpty() && (tag == null || tag.isEmpty())) {
-            return postRepository.findByAuthorName(author, pageable);
-        } else if ((author == null || author.isEmpty()) && tag != null && !tag.isEmpty()) {
-            return postRepository.findByTags(tag, pageable);
+        } else if (!authorsEmpty && tagsEmpty) {
+            return postRepository.findByAuthorNameIn(author, pageable);
+        } else if (authorsEmpty && !tagsEmpty) {
+            return postRepository.findByTagsIn(tag, pageable);
         } else {
-            return postRepository.findByAuthorNameContainingIgnoreCaseAndTagsContaining(author, tag, pageable);
+            return postRepository.findByAuthorNameInAndTagsIn(author, tag, pageable);
         }
+    }
+
+    public Page<Post> searchByTitle(String titleSearch, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return postRepository.findByTitleContainingIgnoreCase(titleSearch, pageable);
     }
 }
 

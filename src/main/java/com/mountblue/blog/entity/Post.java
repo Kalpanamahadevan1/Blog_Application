@@ -27,14 +27,13 @@ public class Post {
     private LocalDateTime publishedAt;
 
     @ElementCollection
-    @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "tag")
+    @CollectionTable(name = "tags", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "name")
     private Set<String> tags = new HashSet<>();
 
     @Transient
     private String tagsDisplay;
 
-    // One-to-many relationship with comments
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
@@ -57,8 +56,8 @@ public class Post {
     public LocalDateTime getPublishedAt() { return publishedAt; }
     public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
 
-    public Set<String> getTags() { return tags; }
-    public void setTags(Set<String> tags) { this.tags = tags; }
+    public Set<String> getTags() {return tags;}
+    public void setTags(Set<String> tags) {this.tags = tags;}
 
     public String getTagsDisplay() { return tagsDisplay; }
     public void setTagsDisplay(String tagsDisplay) { this.tagsDisplay = tagsDisplay; }

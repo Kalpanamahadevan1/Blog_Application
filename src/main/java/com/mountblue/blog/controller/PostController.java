@@ -4,15 +4,13 @@ import com.mountblue.blog.entity.Post;
 import com.mountblue.blog.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Controller
 public class PostController {
@@ -20,32 +18,58 @@ public class PostController {
     @Autowired
     private PostService postService;
 
-    // sorting asc and desc
-@GetMapping("/")
-public String index(
-        Model model,
-        @RequestParam(value = "author", required = false) String author,
-        @RequestParam(value = "tag", required = false) String tag,
-        @RequestParam(value = "sortField", required = false, defaultValue = "publishedAt") String sortField,
-        @RequestParam(value = "sortOrder", required = false, defaultValue = "desc") String sortOrder, // <-- new
-        @RequestParam(value = "page", required = false, defaultValue = "0") int page
-) {
-    String sortString = sortField + sortOrder; // combine field + order, e.g., "titleasc"
-    Page<Post> postsPage = postService.findPosts(author, tag, sortString, page, 10);
+    @GetMapping("/")
+    public String index(
+            Model model,
+            @RequestParam(value = "selectedAuthors",required = false) Set<String> selectedAuthors,
+            @RequestParam(value = "selectedTags" ,required = false) Set<String> selectedTags,
+            @RequestParam(value = "author", required = false) String author,
+            @RequestParam(value = "tag", required = false) String tag,
+            @RequestParam(value = "titleSearch", required = false) String titleSearch,
+            @RequestParam(value = "sortField", required = false, defaultValue = "publishedAt") String sortField,
+            @RequestParam(value = "sortOrder", required = false, defaultValue = "desc") String sortOrder,
+            @RequestParam(value = "page", required = false, defaultValue = "0") int page
+    ) {
 
-    List<Post> posts = postsPage.getContent();
-    posts.forEach(post -> post.setTagsDisplay(String.join(", ", post.getTags())));
+        Page<Post> postsPage;
+        int pageSize = 10;
+        if (selectedAuthors == null) selectedAuthors = new TreeSet<>();
+        if (selectedTags == null) selectedTags = new TreeSet<>();
 
-    model.addAttribute("posts", posts);
-    model.addAttribute("author", author);
-    model.addAttribute("tag", tag);
-    model.addAttribute("sortField", sortField); // pass to view to keep dropdown selected
-    model.addAttribute("sortOrder", sortOrder); // pass to view to keep dropdown selected
-    model.addAttribute("currentPage", page);
-    model.addAttribute("totalPages", postsPage.getTotalPages());
+        if (titleSearch != null && !titleSearch.isEmpty()) {
+            postsPage = postService.searchByTitle(titleSearch, page, pageSize);
+        } else {
+            String sortString = sortField + sortOrder;
+            postsPage = postService.findPosts(selectedAuthors, selectedTags, sortString, page, pageSize);
+        }
 
-    return "index";
-}
+        List<Post> posts = postsPage.getContent();
+        Set<String> all_authors = new TreeSet<>();
+        List<Post> allPost = postService.findAll();
+        Set<String> alltags = new TreeSet<>();
+        for(int i=0;i<=allPost.size()-1;i++){
+            all_authors.add(allPost.get(i).getAuthorName());
+            Set<String> set = allPost.get(i).getTags();
+            Iterator it = set.iterator();
+            while(it.hasNext()){
+                alltags.add((String) it.next());
+            }
+        }
+        posts.forEach(post -> post.setTagsDisplay(String.join(", ", post.getTags())));
+
+        model.addAttribute("posts", posts);
+        model.addAttribute("all_authors",all_authors);
+        model.addAttribute("all_tags",alltags);
+        model.addAttribute("author", author);
+        model.addAttribute("tag", tag);
+        model.addAttribute("sortField", sortField); // pass to view to keep dropdown selected
+        model.addAttribute("sortOrder", sortOrder); // pass to view to keep dropdown selected
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", postsPage.getTotalPages());
+        model.addAttribute("titleSearch", titleSearch);
+
+        return "index";
+    }
 
     @GetMapping("/post/create")
     public String createPostForm(Model model) {
@@ -110,4 +134,5 @@ public String index(
         model.addAttribute("post", post);
         return "view_post";
     }
+
 }

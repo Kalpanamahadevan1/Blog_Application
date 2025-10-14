@@ -16,8 +16,7 @@ public class CommentService {
     }
 
     public Comment findById(Long id) {
-        return commentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+        return commentRepository.findById(id).orElseThrow(() -> new RuntimeException("Comment not found"));
     }
 
     public void deleteById(Long id) {

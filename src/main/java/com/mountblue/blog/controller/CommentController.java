@@ -21,7 +21,6 @@ public class CommentController {
     @Autowired
     private PostService postService;
 
-    // Add Comment
     @PostMapping("/add/{postId}")
     public String addComment(@PathVariable Long postId,
                              @RequestParam String content,
@@ -61,7 +60,6 @@ public class CommentController {
         throw new RuntimeException("Comment not found");
     }
 
-    // Delete Comment
     @GetMapping("/delete/{id}")
     public String deleteComment(@PathVariable Long id) {
         Comment comment = commentService.findById(id);
