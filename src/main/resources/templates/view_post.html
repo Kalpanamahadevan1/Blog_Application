@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title th:text="${post.title}">Post</title>
+    <meta charset="UTF-8">
+    <title th:text="${post.title}">Post</title>
     <style>
         body {
           font-family: Arial;
@@ -13,11 +13,58 @@
           padding: 0 20px;
         }
 
+        .auth-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid #ddd;
+        }
+
+        .auth-links a, .auth-links button {
+          padding: 6px 12px;
+          font-size: 0.85rem;
+          background-color: #000;
+          color: #fff;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          text-decoration: none;
+          margin-left: 10px;
+        }
+
+        .auth-links button:hover, .auth-links a:hover {
+          background-color: #333;
+        }
+
         h2 {
           font-size: 2rem;
           margin-bottom: 10px;
           color: #000;
           text-align: center;
+        }
+
+        .post-meta {
+          text-align: center;
+          color: #666;
+          margin-bottom: 20px;
+          font-size: 0.9rem;
+        }
+
+        .excerpt {
+          background-color: #f5f5f5;
+          padding: 15px;
+          border-left: 4px solid #000;
+          margin: 20px 0;
+          font-style: italic;
+        }
+
+        .content {
+          line-height: 1.8;
+          font-size: 1.1rem;
+          margin: 30px 0;
+          text-align: justify;
         }
 
         p {
@@ -29,6 +76,7 @@
         a {
           color: #000;
           text-decoration: none;
+          font-weight: bold;
         }
 
         a:hover {
@@ -49,15 +97,26 @@
         }
 
         .comment {
-          border-bottom: 1px solid #000;
-          padding: 10px 0;
+          border-bottom: 1px solid #ddd;
+          padding: 15px 0;
         }
 
         .comment p {
           margin: 5px 0;
         }
 
+        .comment-header {
+          font-weight: bold;
+          color: #333;
+        }
+
+        .comment-date {
+          color: #666;
+          font-size: 0.85rem;
+        }
+
         form input[type="text"],
+        form input[type="email"],
         form textarea {
           width: 100%;
           padding: 10px;
@@ -73,6 +132,7 @@
         form textarea {
           resize: vertical;
           min-height: 80px;
+          font-family: Arial;
         }
 
         form button {
@@ -101,6 +161,15 @@
           text-decoration: underline;
         }
 
+        .back-link {
+          display: inline-block;
+          margin-bottom: 20px;
+          padding: 8px 15px;
+          background-color: #f5f5f5;
+          border: 1px solid #000;
+          border-radius: 3px;
+        }
+
         @media (max-width: 600px) {
           body {
             padding: 0 10px;
@@ -108,6 +177,10 @@
 
           h2 {
             font-size: 1.5rem;
+          }
+
+          .content {
+            font-size: 1rem;
           }
 
           form button {
@@ -118,36 +191,62 @@
 </head>
 <body>
 
-<h2 th:text="${post.title}"></h2>
-<p>By <strong th:text="${post.authorName}"></strong></p>
-<p th:text="${post.excerpt}"></p>
-<p>Published at: <span th:text="${#temporals.format(post.publishedAt, 'dd-MM-yyyy HH:mm')}"></span></p>
+<div class="auth-header">
+    <a href="/" class="back-link">← Back to All Posts</a>
+    <div class="auth-links">
+        <span th:if="${isAuthenticated}">
+            <span th:text="${currentUserEmail}"></span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit">Logout</button>
+            </form>
+        </span>
+        <span th:unless="${isAuthenticated}">
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+        </span>
+    </div>
+</div>
 
-<a href="/">Back to All Posts</a>
+<h2 th:text="${post.title}"></h2>
+
+<div class="post-meta">
+    <p>
+        By <strong th:text="${post.authorName}"></strong> |
+        Published: <span th:text="${#temporals.format(post.publishedAt, 'dd-MM-yyyy HH:mm')}"></span>
+    </p>
+    <p>Tags: <span th:text="${post.tagsDisplay}"></span></p>
+</div>
+
+<div class="excerpt">
+    <strong>Excerpt:</strong> <span th:text="${post.excerpt}"></span>
+</div>
+
+<div class="content" th:utext="${post.content}"></div>
 
 <hr/>
 
 <h3>Comments</h3>
 
 <form th:action="@{'/comment/add/' + ${post.id}}" method="post">
-  <input type="text" name="authorName" placeholder="Your Name" required />
-  <textarea name="content" placeholder="Write a comment..." required></textarea>
-  <button type="submit">Add Comment</button>
+    <input type="text" name="authorName" placeholder="Your Name" required />
+    <input type="email" name="email" placeholder="Your Email" required />
+    <textarea name="content" placeholder="Write a comment..." required></textarea>
+    <button type="submit">Add Comment</button>
 </form>
 
 <div th:if="${post.comments != null}">
-  <div th:each="comment : ${post.comments}" class="comment">
-    <p>
-      <strong th:text="${comment.authorName}"></strong>
-      <span th:text="${#temporals.format(comment.createdAt, 'dd-MM-yyyy HH:mm')}"></span>
-    </p>
-    <p th:text="${comment.content}"></p>
-    <p>
-      <a th:href="@{'/comment/edit/' + ${comment.id}}">Edit</a> |
-      <a th:href="@{'/comment/delete/' + ${comment.id}}"
-         onclick="return confirm('Are you sure you want to delete this comment?');">Delete</a>
-    </p>
-  </div>
+    <div th:each="comment : ${post.comments}" class="comment">
+        <p class="comment-header">
+            <span th:text="${comment.authorName}"></span>
+            <span class="comment-date" th:text="${#temporals.format(comment.createdAt, 'dd-MM-yyyy HH:mm')}"></span>
+        </p>
+        <p th:text="${comment.content}"></p>
+        <p th:if="${isAuthenticated and (isAdmin or post.authorEmail == currentUserEmail)}">
+            <a th:href="@{'/comment/edit/' + ${comment.id}}">Edit</a> |
+            <a th:href="@{'/comment/delete/' + ${comment.id}}"
+               onclick="return confirm('Are you sure you want to delete this comment?');">Delete</a>
+        </p>
+    </div>
 </div>
 
 </body>

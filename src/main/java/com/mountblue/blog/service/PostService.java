@@ -8,10 +8,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class PostService {
@@ -39,49 +37,42 @@ public class PostService {
         postRepository.deleteById(id);
     }
 
-    public Page<Post> getPosts(String author, String tag, int page, String sort) {
-        Sort sorting = sort.equals("title") ? Sort.by("title").ascending() : Sort.by("publishedAt").descending();
-        Pageable pageable = PageRequest.of(page, 10, sorting); // 10 per page
-        return postRepository.findByAuthorNameContainingIgnoreCaseAndTagsContainingIgnoreCase(
-                author == null ? "" : author,
-                tag == null ? "" : tag,
-                pageable
-        );
+public Page<Post> findPosts(Set<String> authors, Set<String> tags,
+                            LocalDateTime startDate, LocalDateTime endDate,
+                            String sortString, int page, int size) {
+
+    Pageable pageable = PageRequest.of(page, size);
+
+    if (authors == null) authors = Collections.emptySet();
+    if (tags == null) tags = Collections.emptySet();
+
+    String startDateStr = startDate != null ? startDate.toString() : null;
+    String endDateStr = endDate != null ? endDate.toString() : null;
+
+    if (authors.isEmpty() && tags.isEmpty() && startDateStr == null && endDateStr == null) {
+        Sort sort = parseSortString(sortString);
+        pageable = PageRequest.of(page, size, sort);
+        return postRepository.findAll(pageable);
     }
 
-    public Page<Post> findPosts(Set<String> author, Set<String> tag, String sortField, int page, int size) {
-        Sort sort;
-
-        if ("titleAsc".equalsIgnoreCase(sortField)) {
-            sort = Sort.by("title").ascending();
-        } else if ("titleDesc".equalsIgnoreCase(sortField)) {
-            sort = Sort.by("title").descending();
-        } else if ("publishedAtAsc".equalsIgnoreCase(sortField)) {
-            sort = Sort.by("publishedAt").ascending();
-        } else if ("publishedAtDesc".equalsIgnoreCase(sortField)) {  // fix here
-            sort = Sort.by("publishedAt").descending();
-        } else {
-            sort = Sort.by("publishedAt").descending();  // default
-        }
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-        boolean authorsEmpty = (author == null || author.isEmpty());
-        boolean tagsEmpty = (tag == null || tag.isEmpty());
-
-        if (authorsEmpty && tagsEmpty) {
-            return postRepository.findAll(pageable);
-        } else if (!authorsEmpty && tagsEmpty) {
-            return postRepository.findByAuthorNameIn(author, pageable);
-        } else if (authorsEmpty && !tagsEmpty) {
-            return postRepository.findByTagsIn(tag, pageable);
-        } else {
-            return postRepository.findByAuthorNameInAndTagsIn(author, tag, pageable);
-        }
-    }
-
-    public Page<Post> searchByTitle(String titleSearch, int page, int pageSize) {
-        Pageable pageable = PageRequest.of(page, pageSize);
-        return postRepository.findByTitleContainingIgnoreCase(titleSearch, pageable);
-    }
+    return postRepository.findWithFilters(authors, tags, startDateStr, endDateStr, pageable);
 }
 
+    public Page<Post> fullTextSearch(String searchText, int page, int pageSize, String sortString) {
+        Sort sort = parseSortString(sortString);
+        Pageable pageable = PageRequest.of(page, pageSize, sort);
+        return postRepository.fullTextSearch(searchText, pageable);
+    }
+
+    private Sort parseSortString(String sortString) {
+        if ("titleAsc".equalsIgnoreCase(sortString)) {
+            return Sort.by("title").ascending();
+        } else if ("titleDesc".equalsIgnoreCase(sortString)) {
+            return Sort.by("title").descending();
+        } else if ("publishedAtAsc".equalsIgnoreCase(sortString)) {
+            return Sort.by("publishedAt").ascending();
+        } else {
+            return Sort.by("publishedAt").descending();
+        }
+    }
+}

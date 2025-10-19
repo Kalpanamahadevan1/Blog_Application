@@ -17,10 +17,48 @@
             margin: 0 auto;
         }
 
-        h2 {
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 25px;
+        }
+
+        h2 {
+            margin: 0;
             font-size: 2rem;
             color: #000;
+        }
+
+        .auth-links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .auth-links a, .auth-links form {
+            margin: 0;
+        }
+
+        .auth-links button, .auth-links a {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .auth-links button:hover, .auth-links a:hover {
+            background-color: #333;
+        }
+
+        .user-info {
+            color: #333;
+            font-size: 0.9rem;
         }
 
         .create-post {
@@ -54,7 +92,7 @@
         }
 
         .filter-container {
-            width: 300px;
+            width: 320px;
             position: sticky;
             top: 20px;
             max-height: 85vh;
@@ -88,6 +126,7 @@
         }
 
         .filters input[type="text"],
+        .filters input[type="date"],
         .filters select {
             width: 100%;
             padding: 8px 10px;
@@ -96,6 +135,17 @@
             font-size: 14px;
             color: #000;
             background-color: #fff;
+            box-sizing: border-box;
+        }
+
+        .date-range {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .date-range input {
+            flex: 1;
         }
 
         .checkbox-list {
@@ -164,6 +214,10 @@
             text-decoration: underline;
         }
 
+        .post-actions {
+            margin-top: 10px;
+        }
+
         .pagination {
             display: flex;
             justify-content: center;
@@ -196,83 +250,115 @@
                 box-shadow: none;
                 margin-bottom: 20px;
             }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .date-range {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>All Posts</h2>
+    <div class="header">
+        <h2>All Posts</h2>
+        <div class="auth-links">
+            <div th:if="${isAuthenticated}">
+                <span class="user-info">Welcome, <span th:text="${currentUserEmail}"></span></span>
+                <span th:if="${isAdmin}" class="user-info" style="color: #d32f2f; font-weight: bold;">(Admin)</span>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit">Logout</button>
+                </form>
+            </div>
+            <div th:unless="${isAuthenticated}">
+                <a href="/login">Login</a>
+                <a href="/register">Register</a>
+            </div>
+        </div>
+    </div>
 
-    <div class="create-post">
+    <div class="create-post" th:if="${isAuthenticated}">
         <a href="/post/create"><button type="button">Create New Post</button></a>
     </div>
 
     <div class="content-wrapper">
-        <!-- Posts -->
         <div class="posts-container">
             <div th:each="post : ${posts}" class="post">
                 <h3 th:text="${post.title}"></h3>
-                <p>Published by : <span th:text="${post.authorName}"></span> |
+                <p>Published by: <span th:text="${post.authorName}"></span> |
                     <span th:text="${#temporals.format(post.publishedAt, 'dd-MM-yyyy HH:mm')}"></span></p>
                 <p>Excerpt: <span th:text="${post.excerpt}"></span></p>
                 <p>Tags: <span th:text="${post.tagsDisplay}"></span></p>
-                <p>
-                    <a th:href="@{'/post/' + ${post.id}}">View </a> |
-                    <a th:href="@{'/post/edit/' + ${post.id}}"> Edit </a> |
-                    <a th:href="@{'/post/delete/' + ${post.id}}" onclick="return confirm('Delete this post?');"> Delete </a>
-                </p>
+                <div class="post-actions">
+                    <a th:href="@{'/post/' + ${post.id}}">View</a>
+                    <span th:if="${isAuthenticated and (isAdmin or post.authorEmail == currentUserEmail)}">
+                        | <a th:href="@{'/post/edit/' + ${post.id}}">Edit</a>
+                        | <a th:href="@{'/post/delete/' + ${post.id}}"
+                             onclick="return confirm('Delete this post?');">Delete</a>
+                    </span>
+                </div>
             </div>
 
-            <!-- Pagination -->
             <div class="pagination">
                 <span th:if="${currentPage > 0}">
-                    <a th:href="@{/(page=${currentPage - 1}, titleSearch=${titleSearch}, authors=${selectedAuthors}, tags=${selectedTags}, sortField=${sortField}, sortOrder=${sortOrder})}">Previous</a>
+                    <a th:href="@{/(page=${currentPage - 1}, searchText=${searchText}, selectedAuthors=${selectedAuthors}, selectedTags=${selectedTags}, startDate=${startDate}, endDate=${endDate}, sortField=${sortField}, sortOrder=${sortOrder})}">Previous</a>
                 </span>
                 <span>Page <span th:text="${currentPage + 1}"></span> of <span th:text="${totalPages}"></span></span>
                 <span th:if="${currentPage + 1 < totalPages}">
-                    <a th:href="@{/(page=${currentPage + 1}, titleSearch=${titleSearch}, authors=${selectedAuthors}, tags=${selectedTags}, sortField=${sortField}, sortOrder=${sortOrder})}">Next</a>
+                    <a th:href="@{/(page=${currentPage + 1}, searchText=${searchText}, selectedAuthors=${selectedAuthors}, selectedTags=${selectedTags}, startDate=${startDate}, endDate=${endDate}, sortField=${sortField}, sortOrder=${sortOrder})}">Next</a>
                 </span>
             </div>
         </div>
 
-        <!-- Filter Sidebar -->
         <aside class="filter-container">
-            <h3>Filter Posts</h3>
+            <h3>Search & Filter</h3>
             <form class="filters" th:action="@{/}" method="get">
                 <input type="hidden" name="page" value="0" />
-                <!-- Title Search -->
+
                 <div class="filter-group">
-                    <label for="titleSearch">Search by Title</label>
-                    <input type="text" id="titleSearch" name="titleSearch" placeholder="Enter title" th:value="${titleSearch}">
+                    <label for="searchText">Full Text Search</label>
+                    <input type="text" id="searchText" name="searchText" placeholder="Search title, content, author, tags" th:value="${searchText}">
                 </div>
 
-                <!-- Authors -->
+                <div class="filter-group">
+                    <label>Date Range</label>
+                    <div class="date-range">
+                        <input type="date" name="startDate" th:value="${startDate}" placeholder="Start Date">
+                        <span>to</span>
+                        <input type="date" name="endDate" th:value="${endDate}" placeholder="End Date">
+                    </div>
+                </div>
+
                 <div class="filter-group">
                     <label>Authors</label>
                     <div class="checkbox-list">
                         <div th:each="author_name: ${all_authors}">
                             <label>
-                                <input type="checkbox" name="selectedAuthors" th:value="${author_name}" th:checked="${selectedAuthors != null and selectedAuthors.contains(author)}">
+                                <input type="checkbox" name="selectedAuthors" th:value="${author_name}"
+                                       th:checked="${selectedAuthors != null and selectedAuthors.contains(author_name)}">
                                 <span th:text="${author_name}"></span>
-                            </label><br>
+                            </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tags -->
                 <div class="filter-group">
                     <label>Tags</label>
                     <div class="checkbox-list">
                         <div th:each="tag_name : ${all_tags}">
                             <label>
-                                <input type="checkbox" name="selectedTags" th:value="${tag_name}" th:checked="${selectedTags != null and selectedTags.contains(tag)}">
+                                <input type="checkbox" name="selectedTags" th:value="${tag_name}"
+                                       th:checked="${selectedTags != null and selectedTags.contains(tag_name)}">
                                 <span th:text="${tag_name}"></span>
-                            </label><br>
+                            </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sorting -->
                 <div class="filter-group">
                     <label>Sort by</label>
                     <select name="sortField">

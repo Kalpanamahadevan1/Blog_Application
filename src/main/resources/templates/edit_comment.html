@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Edit Comment</title>
     <style>
-
         body {
             font-family: Arial;
             background-color: #fff;
@@ -31,10 +30,17 @@
             color: #000;
         }
 
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
         form input[type="text"],
+        form input[type="email"],
         form textarea {
-            width: 90%;
-            max-width: 400px;
+            width: 100%;
             display: block;
             margin: 0 auto 15px auto;
             padding: 10px;
@@ -62,6 +68,7 @@
             display: block;
             margin: 0 auto;
             transition: background-color 0.2s, transform 0.2s;
+            width: 100%;
         }
 
         form button:hover {
@@ -69,17 +76,19 @@
             transform: translateY(-1px);
         }
 
-        a {
-            display: block;
-            margin-top: 20px;
-            text-align: center;
-            color: #000;
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 15px;
+            background-color: #f5f5f5;
+            border: 1px solid #000;
+            border-radius: 3px;
             text-decoration: none;
-            font-weight: bold;
+            color: #000;
         }
 
-        a:hover {
-            text-decoration: underline;
+        .back-link:hover {
+            background-color: #e0e0e0;
         }
 
         @media (max-width: 600px) {
@@ -98,14 +107,24 @@
     </style>
 </head>
 <body>
-<h2>Edit Comment</h2>
+<div class="container">
+    <a th:href="@{'/post/' + ${comment.post.id}}" class="back-link">← Back to Post</a>
+    <h2>Edit Comment</h2>
 
-<form th:action="@{'/comment/edit/' + ${comment.id}}" method="post">
-    <input type="text" name="authorName" th:value="${comment.authorName}" required />
-    <textarea name="content" required th:text="${comment.content}"></textarea>
-    <button type="submit">Update Comment</button>
-</form>
+    <form th:action="@{'/comment/edit/' + ${comment.id}}" method="post">
+        <label>Author Name:</label>
+        <input type="text" name="authorName" th:value="${comment.authorName}" required />
 
-<a th:href="@{'/post/' + ${comment.post.id}}">Back to Post</a>
+        <label>Email:</label>
+        <input type="email" name="email" th:value="${comment.email}" required />
+
+        <label>Comment:</label>
+        <textarea name="content" required th:text="${comment.content}"></textarea>
+
+        <button type="submit">Update Comment</button>
+    </form>
+</div>
 </body>
 </html>
+
+

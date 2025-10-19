@@ -5,6 +5,8 @@ import com.mountblue.blog.repository.CommentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class CommentService {
 
@@ -15,18 +17,11 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    public Comment findById(Long id) {
-        return commentRepository.findById(id).orElseThrow(() -> new RuntimeException("Comment not found"));
+    public Optional<Comment> findById(Long id) {
+        return commentRepository.findById(id);
     }
 
     public void deleteById(Long id) {
         commentRepository.deleteById(id);
-    }
-
-    public Comment updateComment(Long id, String content, String authorName) {
-        Comment comment = findById(id);
-        comment.setContent(content);
-        comment.setAuthorName(authorName);
-        return save(comment);
     }
 }

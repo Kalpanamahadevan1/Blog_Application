@@ -1,6 +1,5 @@
 package com.mountblue.blog.entity;
 
-import com.mountblue.blog.entity.Post;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -11,6 +10,9 @@ public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    private String email;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
@@ -25,9 +27,11 @@ public class Comment {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getEmail() {return email;}
+    public void setEmail(String email) {this.email = email;}
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }

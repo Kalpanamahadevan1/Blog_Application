@@ -1,6 +1,5 @@
 package com.mountblue.blog.entity;
 
-import com.mountblue.blog.entity.Comment;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,6 +23,9 @@ public class Post {
 
     private String authorName;
 
+    @Column(name = "author_email")
+    private String authorEmail;
+
     private LocalDateTime publishedAt;
 
     @ElementCollection
@@ -37,7 +39,6 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -52,6 +53,9 @@ public class Post {
 
     public String getAuthorName() { return authorName; }
     public void setAuthorName(String authorName) { this.authorName = authorName; }
+
+    public String getAuthorEmail() { return authorEmail; }
+    public void setAuthorEmail(String authorEmail) { this.authorEmail = authorEmail; }
 
     public LocalDateTime getPublishedAt() { return publishedAt; }
     public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
